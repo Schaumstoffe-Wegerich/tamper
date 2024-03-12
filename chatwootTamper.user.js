@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Chatwoot Email Breite 100%
 // @namespace    http://tampermonkey.net/
-// @version      2024-02-14
+// @version      0.0.2
 // @description  try to take over the world!
-// @author       You
+// @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=frankenschaum.de
 // @updateURL    https://github.com/Schaumstoffe-Wegerich/tamper/raw/master/chatwootTamper.user.js
