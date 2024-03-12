@@ -17,6 +17,6 @@ document.title = "FrankenSchaum Support";
 
 GM_addStyle(`
 .conversation-panel > li .wrap {
- max-width: 100% !important;
+  max-width: 100% !important;
 }
 `);
