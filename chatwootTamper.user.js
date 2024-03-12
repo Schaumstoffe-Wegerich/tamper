@@ -6,8 +6,8 @@
 // @author       You
 // @match        https://hallo.frankenschaum.de/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=frankenschaum.de
-// @updateURL    chatwootTamper.user.js
-// @downloadURL  chatwootTamper.user.js
+// @updateURL    https://github.com/Schaumstoffe-Wegerich/tamper/raw/master/chatwootTamper.user.js
+// @downloadURL  https://github.com/Schaumstoffe-Wegerich/tamper/raw/master/chatwootTamper.user.js
 // @grant        GM_addStyle
 // ==/UserScript==
 
