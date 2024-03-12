@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Chatwoot Email Breite 100%
+// @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
 // @version      1.2
-// @description  try to take over the world!
+// @description  Email Breite & Title
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=frankenschaum.de
