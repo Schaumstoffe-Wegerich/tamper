@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Email Breite & Title
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -22,18 +22,15 @@ GM_addStyle(`
 }
 `);
 
-function styleListItems() {
-    // Suche alle Elemente mit role="listitem"
-    const listItems = document.querySelectorAll('[role="listitem"]');
-    
-    listItems.forEach(item => {
-        // Prüfe, ob ein Element mit der Klasse "target-element" als Nachkomme existiert
-        if (item.querySelector('div div div div span')) {
-            // Füge dem listitem-Element eine spezielle Klasse hinzu, wenn das Ziel-Element gefunden wurde
-            item.style.background = 'var(--r-100)';
-        }
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
+        // Finde alle Elemente mit role="listitem"
+        const listItems = document.querySelectorAll('[role="listitem"]');
 
-// Rufe die Funktion nach dem Laden der Seite auf
-window.onload = styleListItems;
+        listItems.forEach(function(item) {
+            // Prüfe, ob das Element ein Kind mit der Klasse .bg-red-50 hat
+            if (item.querySelector('.bg-red-50')) {
+                // Ändere den Hintergrund des listitem-Elements
+                item.style.background = 'var(--s-100)';
+            }
+        });
+    });
