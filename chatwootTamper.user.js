@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Email Breite & Title
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -13,10 +13,27 @@
 
 console.log('tamper aktiviert');
 
-document.title = "FrankenSchaum Support";
-
 GM_addStyle(`
 .conversation-panel > li .wrap {
-  max-width: 100% !important;
+ max-width: 100% !important;
+}
+[role="listitem"] {
+    background: var(--g-50);
 }
 `);
+
+function styleListItems() {
+    // Suche alle Elemente mit role="listitem"
+    const listItems = document.querySelectorAll('[role="listitem"]');
+    
+    listItems.forEach(item => {
+        // Prüfe, ob ein Element mit der Klasse "target-element" als Nachkomme existiert
+        if (item.querySelector('div div div div span')) {
+            // Füge dem listitem-Element eine spezielle Klasse hinzu, wenn das Ziel-Element gefunden wurde
+            item.style.background = 'var(--r-100)';
+        }
+    });
+}
+
+// Rufe die Funktion nach dem Laden der Seite auf
+window.onload = styleListItems;
