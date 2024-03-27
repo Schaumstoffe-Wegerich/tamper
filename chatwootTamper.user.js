@@ -21,7 +21,7 @@ GM_addStyle(`
     background: var(--g-50);
 }
 `);
-
+document.title = "FrankenSchaum Support";
 document.addEventListener('DOMContentLoaded', function() {
         // Finde alle Elemente mit role="listitem"
         const listItems = document.querySelectorAll('[role="listitem"]');
