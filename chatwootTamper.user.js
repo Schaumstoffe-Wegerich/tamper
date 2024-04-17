@@ -14,9 +14,10 @@
 console.log('tamper aktiviert');
 
 GM_addStyle(`
-.conversation-panel > li .wrap {
+.conversation-panel > li .wrap, .wrap, .wrap .bubble {
  max-width: 100% !important;
 }
+
 [role="listitem"] {
     background: var(--g-50);
 }
