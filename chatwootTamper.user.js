@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.6.1
 // @description  Email Breite & Title
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -16,6 +16,7 @@ console.log('tamper aktiviert');
 GM_addStyle(`
 .conversation-panel > li .wrap, .wrap, .wrap .bubble {
  max-width: 100% !important;
+ width: 95% !important;
 }
 
 [role="listitem"] {
