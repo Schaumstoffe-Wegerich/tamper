@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      1.7.
+// @version      1.96
 // @description  Email Breite & Title
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -22,6 +22,11 @@ GM_addStyle(`
 [role="listitem"] {
     background: var(--g-50);
 }
+.max-h-\[400px\] {
+  max-height:70vh !important;
+}
+.absolute.left-0.right-0.bottom-0.h-40.px-8.flex.items-end.bg-gradient-to-t.from-n-gray-3.via-n-gray-3.via-20\%.to-transparent { display: none;}
+.ProseMirror-woot-style {  max-height: 30rem;  min-height: 5rem;  overflow: auto;}
 `);
 document.title = "FrankenSchaum Support";
 document.addEventListener('DOMContentLoaded', function() {
@@ -36,3 +41,68 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+
+
+function clickExpandButton() {
+    // Selektiert den Button anhand der enthaltenen Textinhalte
+    const buttons = Array.from(document.querySelectorAll('button.text-n-slate-12'))
+        .filter(btn => btn.textContent.includes('E-Mail erweitern'));
+
+    buttons.forEach(button => {
+        if (!button.dataset._autoClicked) { // Verhindert mehrfaches Klicken
+            button.click();
+            button.dataset._autoClicked = "true";
+            console.log('🔘 "E-Mail erweitern"-Button automatisch geklickt');
+        }
+    });
+}
+
+// MutationObserver, um auf neue Buttons zu reagieren
+const buttonObserver = new MutationObserver(() => {
+    clickExpandButton();
+});
+
+buttonObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Auch initial prüfen
+clickExpandButton();
+
+function removeDuplicateSignature() {
+    const editor = document.querySelector('.ProseMirror.ProseMirror-woot-style');
+    if (!editor) return;
+
+    const paragraphs = Array.from(editor.querySelectorAll('p'));
+    const sepIndexes = paragraphs
+        .map((p, i) => p.textContent.trim() === '--' ? i : -1)
+        .filter(i => i !== -1);
+
+    if (sepIndexes.length >= 2) {
+        const [firstSep, secondSep] = sepIndexes;
+
+        // Entferne alles zwischen erstem Trenner und dem zweiten
+        for (let i = firstSep; i < secondSep; i++) {
+            paragraphs[i].remove();
+        }
+
+        console.log(`✂️ Erste Signatur entfernt (zwischen Absatz ${firstSep} und ${secondSep})`);
+    }
+}
+
+// Trigger bei DOM-Änderungen
+const sigObserver = new MutationObserver(() => {
+    removeDuplicateSignature();
+});
+
+sigObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Optional auch beim Laden
+document.addEventListener('DOMContentLoaded', () => {
+    removeDuplicateSignature();
+});
