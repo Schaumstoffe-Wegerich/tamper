@@ -84,7 +84,7 @@ function clickExpandButton() {
             button.click();
             button.dataset._autoClicked = "true";
             console.log('🔘 "E-Mail erweitern"-Button automatisch geklickt');
-            setTimeout(scrollToLastMessage, 200);
+            setTimeout(scrollToLastMessage, 300);
         }
     });
 }
