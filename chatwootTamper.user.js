@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      1.96
+// @version      1.97
 // @description  Email Breite & Title
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -42,7 +42,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+function scrollToLastMessage() {
+    const messageElements = document.querySelectorAll('div[id^="message"]');
+    const messages = [];
 
+    messageElements.forEach(element => {
+      const id = element.id;
+      const match = id.match(/^message(\d+)$/);
+      if (match) {
+        const currentIdNum = parseInt(match[1], 10);
+        messages.push({ id: currentIdNum, element: element });
+      }
+    });
+
+    // Sort messages by ID in descending order
+    messages.sort((a, b) => b.id - a.id);
+
+    let targetElement = null;
+    // Check if there are at least two messages to select the second to last
+    if (messages.length >= 2) {
+      targetElement = messages[1].element; // The second element is the second to last
+    } else if (messages.length === 1) {
+      targetElement = messages[0].element; // If only one, scroll to it
+    }
+
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      console.log(`Scrolled to message: ${targetElement.id}`);
+    } else {
+      console.log('No message element found to scroll to.');
+    }
+}
 
 function clickExpandButton() {
     // Selektiert den Button anhand der enthaltenen Textinhalte
@@ -54,6 +84,7 @@ function clickExpandButton() {
             button.click();
             button.dataset._autoClicked = "true";
             console.log('🔘 "E-Mail erweitern"-Button automatisch geklickt');
+            setTimeout(scrollToLastMessage, 200);
         }
     });
 }
