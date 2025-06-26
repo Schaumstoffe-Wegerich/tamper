@@ -26,7 +26,7 @@ GM_addStyle(`
   max-height:70vh !important;
 }
 .absolute.left-0.right-0.bottom-0.h-40.px-8.flex.items-end.bg-gradient-to-t.from-n-gray-3.via-n-gray-3.via-20\%.to-transparent { display: none;}
-.ProseMirror-woot-style {  max-height: 30rem;  min-height: 5rem;  overflow: auto;}
+.ProseMirror-woot-style {  max-height: 15rem;  min-height: 5rem;  overflow: auto;}
 `);
 document.title = "FrankenSchaum Support";
 document.addEventListener('DOMContentLoaded', function() {
