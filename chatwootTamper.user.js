@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      1.97
+// @version      1.98
 // @description  Email Breite & Title
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
