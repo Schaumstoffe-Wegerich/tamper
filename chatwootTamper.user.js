@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.03
-// @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen
+// @version      2.04
+// @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=frankenschaum.de
@@ -62,6 +62,38 @@ GM_addStyle(`
 img[src*="frankenschaum.de/bilder/intern/shoplogo"] {
   max-width: 6rem !important;
   height: auto !important;
+}
+
+/* Dashboard App Sidebar */
+.dashboard-app-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  background: white;
+  border-left: 1px solid #e0e0e0;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+}
+
+.dashboard-app-sidebar iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Conversation-Bereich anpassen wenn Sidebar aktiv */
+body.has-dashboard-sidebar .conversation-wrap {
+  margin-right: 400px;
+}
+
+/* Tab ausblenden */
+[role="tab"]:has([href*="dashboard"]),
+[role="tab"]:has-text("Bestellungen"),
+button:has-text("Bestellungen") {
+  display: none !important;
 }
 `);
 document.title = "FrankenSchaum Support";
@@ -451,3 +483,64 @@ notesObserver.observe(document.body, {
 
 // Initial ausführen
 findAndCollapseNotes();
+
+// ===== NEUE FUNKTION: Dashboard App als Sidebar =====
+
+function moveDashboardAppToSidebar() {
+    // Suche nach dem Dashboard App iframe
+    const dashboardIframe = document.querySelector('iframe[src*="cwa.intern.frankenschaum.de"]');
+
+    if (!dashboardIframe) {
+        console.log('Dashboard App iframe nicht gefunden');
+        return;
+    }
+
+    // Prüfe ob bereits verschoben
+    if (document.querySelector('.dashboard-app-sidebar')) {
+        return;
+    }
+
+    // Verstecke den Tab/Tab-Content
+    const tabContent = dashboardIframe.closest('[role="tabpanel"]') ||
+                       dashboardIframe.closest('.dashboard-app-container');
+
+    if (tabContent) {
+        tabContent.style.display = 'none';
+    }
+
+    // Suche und verstecke den Tab-Button
+    const tabs = document.querySelectorAll('[role="tab"]');
+    tabs.forEach(tab => {
+        const text = tab.textContent || '';
+        if (text.includes('Bestellungen') || text.includes('Dashboard')) {
+            tab.style.display = 'none';
+        }
+    });
+
+    // Erstelle die Sidebar
+    const sidebar = document.createElement('div');
+    sidebar.className = 'dashboard-app-sidebar';
+
+    // Clone das iframe
+    const clonedIframe = dashboardIframe.cloneNode(true);
+    sidebar.appendChild(clonedIframe);
+
+    // Füge die Sidebar zum Body hinzu
+    document.body.appendChild(sidebar);
+    document.body.classList.add('has-dashboard-sidebar');
+
+    console.log('📊 Dashboard App als Sidebar verschoben');
+}
+
+// Observer für Dashboard App
+const dashboardObserver = new MutationObserver(() => {
+    moveDashboardAppToSidebar();
+});
+
+dashboardObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Initial ausführen
+moveDashboardAppToSidebar();
