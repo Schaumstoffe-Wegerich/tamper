@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.01
-// @description  Email Breite & Title & Zitate/Signaturen wegklappen
+// @version      2.02
+// @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=frankenschaum.de
@@ -337,3 +337,111 @@ collapseObserver.observe(document.body, {
 
 // Initial ausführen
 findAndCollapseQuotesAndSignatures();
+
+// ===== NEUE FUNKTION: Interne Notizen wegklappen =====
+
+function makeNoteCollapsible(noteElement) {
+    if (noteElement.dataset._noteCollapsed) return; // Bereits bearbeitet
+
+    // Finde den eigentlichen Content-Bereich der Notiz
+    const noteContent = noteElement.querySelector('.bubble') ||
+                        noteElement.querySelector('.text-content') ||
+                        noteElement.querySelector('[class*="content"]') ||
+                        noteElement;
+
+    if (!noteContent) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'email-collapse-wrapper';
+    wrapper.style.marginTop = '4px';
+
+    const button = document.createElement('button');
+    button.className = 'email-collapse-button';
+    button.textContent = '▶ Notiz anzeigen';
+    button.dataset.collapsed = 'true';
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'email-collapse-content collapsed';
+    contentWrapper.style.maxHeight = '0';
+
+    // Klone den Inhalt
+    const originalContent = noteContent.cloneNode(true);
+    contentWrapper.appendChild(originalContent);
+
+    button.addEventListener('click', () => {
+        const isCollapsed = button.dataset.collapsed === 'true';
+        if (isCollapsed) {
+            contentWrapper.classList.remove('collapsed');
+            contentWrapper.style.maxHeight = contentWrapper.scrollHeight + 'px';
+            button.textContent = '▼ Notiz ausblenden';
+            button.dataset.collapsed = 'false';
+        } else {
+            contentWrapper.style.maxHeight = '0';
+            contentWrapper.classList.add('collapsed');
+            button.textContent = '▶ Notiz anzeigen';
+            button.dataset.collapsed = 'true';
+        }
+    });
+
+    wrapper.appendChild(button);
+    wrapper.appendChild(contentWrapper);
+
+    // Verstecke den originalen Inhalt
+    noteContent.style.display = 'none';
+
+    // Füge den Wrapper nach dem Notiz-Element ein
+    if (noteElement.parentNode) {
+        noteElement.appendChild(wrapper);
+    }
+
+    noteElement.dataset._noteCollapsed = 'true';
+    console.log('📝 Interne Notiz eingeklappt');
+}
+
+function findAndCollapseNotes() {
+    // Suche nach verschiedenen Selektoren für interne Notizen in Chatwoot
+    const noteSelectors = [
+        '.activity--note',
+        '.note-wrap',
+        '[class*="note"]',
+        '[class*="activity"][class*="note"]',
+        '.is-private',
+        '[data-message-type="note"]',
+        '.conversation-panel .wrap:has(.bg-yellow-50)',
+        '.conversation-panel .wrap:has(.bg-amber-50)',
+        '[role="listitem"]:has([class*="private"])',
+        '[role="listitem"]:has([class*="note"])'
+    ];
+
+    noteSelectors.forEach(selector => {
+        try {
+            const notes = document.querySelectorAll(selector);
+            notes.forEach(note => {
+                // Prüfe, ob es wirklich eine Notiz ist (nicht eine normale Nachricht)
+                if (!note.dataset._noteCollapsed) {
+                    // Zusätzliche Validierung: Überspringe wenn es eine normale Nachricht ist
+                    const hasIncomingOutgoing = note.classList.contains('incoming') ||
+                                                note.classList.contains('outgoing');
+                    if (!hasIncomingOutgoing) {
+                        makeNoteCollapsible(note);
+                    }
+                }
+            });
+        } catch (e) {
+            // Ignoriere ungültige Selektoren
+        }
+    });
+}
+
+// Observer für neue Notizen
+const notesObserver = new MutationObserver(() => {
+    findAndCollapseNotes();
+});
+
+notesObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Initial ausführen
+findAndCollapseNotes();
