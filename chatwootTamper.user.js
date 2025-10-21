@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.27
+// @version      2.28
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -764,6 +764,8 @@ new MutationObserver(() => {
 }).observe(document, {subtree: true, childList: true});
 
 // Contact Sidebar Toggle - setze z-index wenn geklickt
+let isDashboardSidebarHidden = false;
+
 function setupContactSidebarToggle() {
     // Finde den Toggle-Button (mit user icon)
     const toggleButton = document.querySelector('button.\\!rounded-full .i-ph-user-bold');
@@ -788,22 +790,20 @@ function handleContactSidebarToggle() {
 
         if (contactSidebar) {
             contactSidebar.style.zIndex = '9999999';
+        }
 
-            // Toggle Dashboard Sidebar Sichtbarkeit
-            if (dashboardSidebarElement) {
-                // Prüfe ob Contact Sidebar sichtbar ist (hat translate-x-0 oder ist visible)
-                const isContactSidebarVisible = !contactSidebar.classList.contains('translate-x-full') &&
-                                                !contactSidebar.classList.contains('ltr:translate-x-full');
-
-                if (isContactSidebarVisible) {
-                    // Contact Sidebar ist offen -> Dashboard Sidebar ausblenden
-                    dashboardSidebarElement.style.display = 'none';
-                    console.log('📱 Contact Sidebar offen -> Dashboard Sidebar ausgeblendet');
-                } else {
-                    // Contact Sidebar ist zu -> Dashboard Sidebar wieder anzeigen
-                    dashboardSidebarElement.style.display = 'block';
-                    console.log('📱 Contact Sidebar zu -> Dashboard Sidebar eingeblendet');
-                }
+        // Toggle Dashboard Sidebar Sichtbarkeit
+        if (dashboardSidebarElement) {
+            if (isDashboardSidebarHidden) {
+                // Dashboard Sidebar war ausgeblendet -> wieder einblenden
+                dashboardSidebarElement.style.display = 'block';
+                isDashboardSidebarHidden = false;
+                console.log('📱 Dashboard Sidebar eingeblendet');
+            } else {
+                // Dashboard Sidebar war sichtbar -> ausblenden
+                dashboardSidebarElement.style.display = 'none';
+                isDashboardSidebarHidden = true;
+                console.log('📱 Dashboard Sidebar ausgeblendet');
             }
         }
     }, 100);
