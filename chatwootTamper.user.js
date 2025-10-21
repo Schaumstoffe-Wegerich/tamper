@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.02
+// @version      2.03
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -56,6 +56,12 @@ GM_addStyle(`
   max-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+}
+
+/* Logo-Bild verkleinern */
+img[src*="frankenschaum.de/bilder/intern/shoplogo"] {
+  max-width: 6rem !important;
+  height: auto !important;
 }
 `);
 document.title = "FrankenSchaum Support";
