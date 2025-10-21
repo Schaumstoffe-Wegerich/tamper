@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.22
+// @version      2.23
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -664,24 +664,40 @@ function moveDashboardAppToSidebar() {
     }, 200);
 }
 
-function clickMessagesTab() {
+function clickMessagesTab(retryCount = 0) {
     // Suche nach dem Nachrichten-Tab
     const possibleSelectors = [
         'a.flex.items-center',
         '[class*="cursor-pointer"]',
-        'a'
+        'a',
+        'button',
+        '[role="tab"]'
     ];
 
+    let found = false;
+
     for (const selector of possibleSelectors) {
+        if (found) break;
+
         const tabs = document.querySelectorAll(selector);
-        tabs.forEach(tab => {
+        for (const tab of tabs) {
             const text = tab.textContent || '';
-            if (text.trim() === 'Nachrichten') {
+            if (text.trim() === 'Nachrichten' || text.includes('Nachrichten')) {
                 tab.click();
-                console.log('✅ Nachrichten-Tab geklickt');
-                return;
+                console.log('✅ Nachrichten-Tab geklickt (Versuch ' + (retryCount + 1) + ')');
+                found = true;
+                break;
             }
-        });
+        }
+    }
+
+    // Retry falls nicht gefunden und noch unter 5 Versuchen
+    if (!found && retryCount < 5) {
+        setTimeout(() => {
+            clickMessagesTab(retryCount + 1);
+        }, 200);
+    } else if (!found) {
+        console.log('⚠️ Nachrichten-Tab nicht gefunden nach 5 Versuchen');
     }
 }
 
