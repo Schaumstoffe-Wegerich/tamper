@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.23
+// @version      2.24
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -714,10 +714,18 @@ function checkConversationChange() {
             moveDashboardAppToSidebar();
         }, 100);
 
-        // Klicke auf Nachrichten-Tab um Content anzuzeigen
+        // Klicke auf Nachrichten-Tab um Content anzuzeigen - mehrmals mit Verzögerung
         setTimeout(() => {
             clickMessagesTab();
-        }, 300);
+        }, 400);
+
+        setTimeout(() => {
+            clickMessagesTab();
+        }, 800);
+
+        setTimeout(() => {
+            clickMessagesTab();
+        }, 1200);
 
         // Reload das Dashboard nach kurzer Verzögerung
         setTimeout(() => {
