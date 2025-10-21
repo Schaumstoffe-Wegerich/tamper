@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.04
+// @version      2.05
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -486,17 +486,58 @@ findAndCollapseNotes();
 
 // ===== NEUE FUNKTION: Dashboard App als Sidebar =====
 
+let currentConversationId = null;
+let dashboardSidebar = null;
+let dashboardIframeInSidebar = null;
+
+function getCurrentConversationId() {
+    // Versuche die Conversation ID aus der URL zu extrahieren
+    const urlMatch = window.location.pathname.match(/\/conversations\/(\d+)/);
+    if (urlMatch) {
+        return urlMatch[1];
+    }
+
+    // Alternativ: Suche in einem data-Attribut oder anderen DOM-Element
+    const conversationElement = document.querySelector('[data-conversation-id]');
+    if (conversationElement) {
+        return conversationElement.dataset.conversationId;
+    }
+
+    return null;
+}
+
+function reloadDashboardIframe() {
+    if (!dashboardIframeInSidebar) return;
+
+    console.log('🔄 Dashboard wird neu geladen für Conversation:', currentConversationId);
+
+    // Force reload des iframes
+    const currentSrc = dashboardIframeInSidebar.src;
+    dashboardIframeInSidebar.src = '';
+    setTimeout(() => {
+        dashboardIframeInSidebar.src = currentSrc;
+    }, 50);
+}
+
+function ensureDashboardTabIsActive() {
+    // Simuliere Klick auf den Dashboard Tab um sicherzustellen,
+    // dass Chatwoot die Daten an das iframe sendet
+    const tabs = document.querySelectorAll('[role="tab"]');
+    tabs.forEach(tab => {
+        const text = tab.textContent || '';
+        if (text.includes('Bestellungen') || text.includes('Dashboard')) {
+            // Klicke auf den Tab, auch wenn er hidden ist
+            tab.click();
+            console.log('🔘 Dashboard Tab aktiviert');
+        }
+    });
+}
+
 function moveDashboardAppToSidebar() {
     // Suche nach dem Dashboard App iframe
     const dashboardIframe = document.querySelector('iframe[src*="cwa.intern.frankenschaum.de"]');
 
     if (!dashboardIframe) {
-        console.log('Dashboard App iframe nicht gefunden');
-        return;
-    }
-
-    // Prüfe ob bereits verschoben
-    if (document.querySelector('.dashboard-app-sidebar')) {
         return;
     }
 
@@ -508,7 +549,7 @@ function moveDashboardAppToSidebar() {
         tabContent.style.display = 'none';
     }
 
-    // Suche und verstecke den Tab-Button
+    // Suche und verstecke den Tab-Button (aber nach dem Klick!)
     const tabs = document.querySelectorAll('[role="tab"]');
     tabs.forEach(tab => {
         const text = tab.textContent || '';
@@ -517,24 +558,59 @@ function moveDashboardAppToSidebar() {
         }
     });
 
+    // Prüfe ob Sidebar bereits existiert
+    if (dashboardSidebar) {
+        // Update nur das iframe
+        const existingIframe = dashboardSidebar.querySelector('iframe');
+        if (existingIframe && dashboardIframe.src !== existingIframe.src) {
+            existingIframe.src = dashboardIframe.src;
+        }
+        dashboardIframeInSidebar = existingIframe;
+        return;
+    }
+
     // Erstelle die Sidebar
-    const sidebar = document.createElement('div');
-    sidebar.className = 'dashboard-app-sidebar';
+    dashboardSidebar = document.createElement('div');
+    dashboardSidebar.className = 'dashboard-app-sidebar';
 
     // Clone das iframe
     const clonedIframe = dashboardIframe.cloneNode(true);
-    sidebar.appendChild(clonedIframe);
+    // Entferne lazy loading
+    clonedIframe.loading = 'eager';
+    dashboardSidebar.appendChild(clonedIframe);
+    dashboardIframeInSidebar = clonedIframe;
 
     // Füge die Sidebar zum Body hinzu
-    document.body.appendChild(sidebar);
+    document.body.appendChild(dashboardSidebar);
     document.body.classList.add('has-dashboard-sidebar');
 
     console.log('📊 Dashboard App als Sidebar verschoben');
 }
 
-// Observer für Dashboard App
+function checkConversationChange() {
+    const newConversationId = getCurrentConversationId();
+
+    if (newConversationId && newConversationId !== currentConversationId) {
+        console.log('🔄 Conversation geändert:', currentConversationId, '->', newConversationId);
+        currentConversationId = newConversationId;
+
+        // Aktiviere den Dashboard Tab damit Chatwoot Daten sendet
+        setTimeout(() => {
+            ensureDashboardTabIsActive();
+            moveDashboardAppToSidebar();
+        }, 100);
+
+        // Reload das Dashboard nach kurzer Verzögerung
+        setTimeout(() => {
+            reloadDashboardIframe();
+        }, 500);
+    }
+}
+
+// Observer für Dashboard App UND Conversation Changes
 const dashboardObserver = new MutationObserver(() => {
     moveDashboardAppToSidebar();
+    checkConversationChange();
 });
 
 dashboardObserver.observe(document.body, {
@@ -542,5 +618,20 @@ dashboardObserver.observe(document.body, {
     subtree: true
 });
 
+// Überwache auch URL-Änderungen
+let lastUrl = location.href;
+new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        console.log('🔗 URL geändert:', url);
+        checkConversationChange();
+    }
+}).observe(document, {subtree: true, childList: true});
+
 // Initial ausführen
-moveDashboardAppToSidebar();
+setTimeout(() => {
+    ensureDashboardTabIsActive();
+    moveDashboardAppToSidebar();
+    currentConversationId = getCurrentConversationId();
+}, 1000);
