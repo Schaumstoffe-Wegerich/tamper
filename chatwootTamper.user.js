@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.14
+// @version      2.15
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -84,9 +84,23 @@ img[src*="frankenschaum.de/bilder/intern/shoplogo"] {
   border: none;
 }
 
-/* Conversation-Bereich anpassen wenn Sidebar aktiv */
-body.has-dashboard-sidebar .conversation-wrap {
-  margin-right: 400px;
+/* Hauptbereich anpassen wenn Sidebar aktiv - Tab Container auf calc() */
+body.has-dashboard-sidebar [role="main"],
+body.has-dashboard-sidebar main,
+body.has-dashboard-sidebar .view-box,
+body.has-dashboard-sidebar .conversations-view {
+  width: calc(100% - 400px) !important;
+  max-width: calc(100% - 400px) !important;
+}
+
+/* Message Container behält volle Breite innerhalb seines Parents */
+body.has-dashboard-sidebar .conversation-wrap,
+body.has-dashboard-sidebar .messages-wrap,
+body.has-dashboard-sidebar .bubble,
+body.has-dashboard-sidebar .wrap {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-right: 0 !important;
 }
 
 /* Tab ausblenden */
