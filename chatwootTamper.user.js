@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.30
+// @version      2.31
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -413,7 +413,8 @@ function makeNoteCollapsible(noteElement) {
     if (noteElement.dataset._noteCollapsed) return; // Bereits bearbeitet
 
     // Finde den eigentlichen Content-Bereich der Notiz
-    const noteContent = noteElement.querySelector('.bubble') ||
+    const noteContent = noteElement.querySelector('.bg-n-solid-amber') ||
+                        noteElement.querySelector('.bubble') ||
                         noteElement.querySelector('.text-content') ||
                         noteElement.querySelector('[class*="content"]') ||
                         noteElement;
@@ -479,7 +480,11 @@ function findAndCollapseNotes() {
         '.conversation-panel .wrap:has(.bg-yellow-50)',
         '.conversation-panel .wrap:has(.bg-amber-50)',
         '[role="listitem"]:has([class*="private"])',
-        '[role="listitem"]:has([class*="note"])'
+        '[role="listitem"]:has([class*="note"])',
+        // Neue Selektoren für amber/gelbe interne Nachrichten
+        '.message-bubble-container:has(.bg-n-solid-amber)',
+        '.message-bubble-container:has(.i-lucide-lock-keyhole)',
+        'div[id^="message"]:has(.bg-n-solid-amber)'
     ];
 
     noteSelectors.forEach(selector => {
