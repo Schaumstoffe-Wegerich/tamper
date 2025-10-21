@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.08
+// @version      2.09
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -527,27 +527,49 @@ function reloadDashboardIframe() {
 function ensureDashboardTabIsActive() {
     // Simuliere Klick auf den Dashboard Tab um sicherzustellen,
     // dass Chatwoot die Daten an das iframe sendet
-    const tabs = document.querySelectorAll('[role="tab"]');
+
+    // Suche nach verschiedenen Tab-Selektoren
+    const possibleSelectors = [
+        '[role="tab"]',  // Standard ARIA tabs
+        'li a',          // Chatwoot verwendet <li><a>
+        '.flex-shrink-0 a',  // Spezifischer Chatwoot-Selektor
+        'a[class*="cursor-pointer"]'  // Links mit cursor-pointer
+    ];
+
     let foundTab = false;
 
-    tabs.forEach(tab => {
-        const text = tab.textContent || '';
-        if (text.includes('Bestellungen') || text.includes('Dashboard')) {
-            // Mache den Tab kurz sichtbar für den Klick
-            const originalDisplay = tab.style.display;
-            tab.style.display = 'block';
+    for (const selector of possibleSelectors) {
+        const tabs = document.querySelectorAll(selector);
 
-            // Klicke auf den Tab
-            tab.click();
-            foundTab = true;
-            console.log('🔘 Dashboard Tab aktiviert:', text.trim());
+        tabs.forEach(tab => {
+            const text = tab.textContent || '';
+            if (text.trim() === 'Bestellungen' || text.includes('Dashboard')) {
+                // Mache den Tab kurz sichtbar für den Klick (falls versteckt)
+                const originalDisplay = tab.style.display;
+                const parentOriginalDisplay = tab.parentElement?.style.display;
 
-            // Verstecke ihn nach dem Klick wieder
-            setTimeout(() => {
-                tab.style.display = originalDisplay || 'none';
-            }, 100);
-        }
-    });
+                tab.style.display = 'block';
+                if (tab.parentElement) {
+                    tab.parentElement.style.display = 'block';
+                }
+
+                // Klicke auf den Tab
+                tab.click();
+                foundTab = true;
+                console.log('🔘 Dashboard Tab aktiviert:', text.trim(), '(Selektor:', selector, ')');
+
+                // Verstecke ihn nach dem Klick wieder
+                setTimeout(() => {
+                    tab.style.display = originalDisplay || 'none';
+                    if (tab.parentElement) {
+                        tab.parentElement.style.display = parentOriginalDisplay || 'none';
+                    }
+                }, 100);
+            }
+        });
+
+        if (foundTab) break;  // Stoppe wenn gefunden
+    }
 
     if (!foundTab) {
         console.log('⚠️ Dashboard Tab nicht gefunden');
@@ -574,12 +596,19 @@ function moveDashboardAppToSidebar() {
                        dashboardIframe.closest('.dashboard-app-container');
 
     // Suche und verstecke den Tab-Button (aber nach dem Klick!)
-    const tabs = document.querySelectorAll('[role="tab"]');
-    tabs.forEach(tab => {
-        const text = tab.textContent || '';
-        if (text.includes('Bestellungen') || text.includes('Dashboard')) {
-            tab.style.display = 'none';
-        }
+    const possibleSelectors = ['[role="tab"]', 'li a', '.flex-shrink-0 a'];
+
+    possibleSelectors.forEach(selector => {
+        const tabs = document.querySelectorAll(selector);
+        tabs.forEach(tab => {
+            const text = tab.textContent || '';
+            if (text.trim() === 'Bestellungen' || text.includes('Dashboard')) {
+                if (tab.parentElement) {
+                    tab.parentElement.style.display = 'none';
+                }
+                tab.style.display = 'none';
+            }
+        });
     });
 
     // Erstelle die Sidebar falls noch nicht vorhanden
