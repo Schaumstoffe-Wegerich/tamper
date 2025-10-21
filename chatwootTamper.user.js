@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.26
+// @version      2.27
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -784,10 +784,27 @@ function handleContactSidebarToggle() {
     setTimeout(() => {
         // Finde die Contact Sidebar
         const contactSidebar = document.querySelector('.bg-n-background.h-full.overflow-hidden.flex.flex-col.fixed.top-0.z-40');
+        const dashboardSidebarElement = document.querySelector('.dashboard-app-sidebar');
 
         if (contactSidebar) {
             contactSidebar.style.zIndex = '9999999';
-            console.log('📱 Contact Sidebar z-index auf 9999999 gesetzt');
+
+            // Toggle Dashboard Sidebar Sichtbarkeit
+            if (dashboardSidebarElement) {
+                // Prüfe ob Contact Sidebar sichtbar ist (hat translate-x-0 oder ist visible)
+                const isContactSidebarVisible = !contactSidebar.classList.contains('translate-x-full') &&
+                                                !contactSidebar.classList.contains('ltr:translate-x-full');
+
+                if (isContactSidebarVisible) {
+                    // Contact Sidebar ist offen -> Dashboard Sidebar ausblenden
+                    dashboardSidebarElement.style.display = 'none';
+                    console.log('📱 Contact Sidebar offen -> Dashboard Sidebar ausgeblendet');
+                } else {
+                    // Contact Sidebar ist zu -> Dashboard Sidebar wieder anzeigen
+                    dashboardSidebarElement.style.display = 'block';
+                    console.log('📱 Contact Sidebar zu -> Dashboard Sidebar eingeblendet');
+                }
+            }
         }
     }, 100);
 }
