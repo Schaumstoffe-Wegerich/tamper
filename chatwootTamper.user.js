@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.06
+// @version      2.07
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -514,12 +514,14 @@ function reloadDashboardIframe() {
     // Triggere einen Tab-Wechsel um Chatwoot zu zwingen, Daten zu senden
     ensureDashboardTabIsActive();
 
-    // Optional: Force reload des iframes (nur wenn nötig)
-    // const currentSrc = dashboardIframeInSidebar.src;
-    // dashboardIframeInSidebar.src = '';
-    // setTimeout(() => {
-    //     dashboardIframeInSidebar.src = currentSrc;
-    // }, 50);
+    // Force reload des iframes für neue Conversation
+    setTimeout(() => {
+        const currentSrc = dashboardIframeInSidebar.src;
+        // Füge einen Timestamp-Parameter hinzu um Cache zu umgehen
+        const separator = currentSrc.includes('?') ? '&' : '?';
+        dashboardIframeInSidebar.src = currentSrc.split('?')[0] + separator + '_reload=' + Date.now();
+        console.log('🔄 Dashboard iframe reloaded');
+    }, 300);
 }
 
 function ensureDashboardTabIsActive() {
@@ -602,7 +604,7 @@ function checkConversationChange() {
         // Reload das Dashboard nach kurzer Verzögerung
         setTimeout(() => {
             reloadDashboardIframe();
-        }, 500);
+        }, 600);
     }
 }
 
