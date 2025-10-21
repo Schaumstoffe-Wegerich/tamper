@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      1.99
-// @description  Email Breite & Title
+// @version      2.00
+// @description  Email Breite & Title & Zitate/Signaturen wegklappen
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=frankenschaum.de
@@ -27,6 +27,36 @@ GM_addStyle(`
 }
 .absolute.left-0.right-0.bottom-0.h-40.px-8.flex.items-end.bg-gradient-to-t.from-n-gray-3.via-n-gray-3.via-20\%.to-transparent { display: none;}
 .ProseMirror-woot-style {  max-height: 15vh;  min-height: 5rem;  overflow: auto;}
+
+/* Styles für wegklappbare Zitate und Signaturen */
+.email-collapse-wrapper {
+  margin: 8px 0;
+  border-left: 3px solid #e0e0e0;
+  padding-left: 8px;
+}
+.email-collapse-button {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 4px;
+  color: #666;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+.email-collapse-button:hover {
+  background: #e8e8e8;
+}
+.email-collapse-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.email-collapse-content.collapsed {
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
 `);
 document.title = "FrankenSchaum Support";
 document.addEventListener('DOMContentLoaded', function() {
@@ -137,3 +167,147 @@ sigObserver.observe(document.body, {
 document.addEventListener('DOMContentLoaded', () => {
     removeDuplicateSignature();
 });
+
+// ===== NEUE FUNKTION: Zitate und Signaturen wegklappen =====
+
+function makeCollapsible(element, content, label) {
+    if (element.dataset._collapsible) return; // Bereits bearbeitet
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'email-collapse-wrapper';
+
+    const button = document.createElement('button');
+    button.className = 'email-collapse-button';
+    button.textContent = `▼ ${label}`;
+    button.dataset.collapsed = 'false';
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'email-collapse-content collapsed';
+    contentWrapper.appendChild(content.cloneNode(true));
+
+    button.addEventListener('click', () => {
+        const isCollapsed = button.dataset.collapsed === 'true';
+        if (isCollapsed) {
+            contentWrapper.classList.remove('collapsed');
+            button.textContent = `▼ ${label}`;
+            button.dataset.collapsed = 'false';
+        } else {
+            contentWrapper.classList.add('collapsed');
+            button.textContent = `▶ ${label}`;
+            button.dataset.collapsed = 'true';
+        }
+    });
+
+    wrapper.appendChild(button);
+    wrapper.appendChild(contentWrapper);
+
+    element.parentNode.insertBefore(wrapper, element);
+    element.remove();
+
+    // Standardmäßig eingeklappt
+    button.click();
+
+    wrapper.dataset._collapsible = 'true';
+}
+
+function findAndCollapseQuotesAndSignatures() {
+    // Finde alle Nachrichten-Container
+    const messages = document.querySelectorAll('div[id^="message"]');
+
+    messages.forEach(messageDiv => {
+        if (messageDiv.dataset._quotesProcessed) return;
+
+        // Suche nach verschiedenen Strukturen für E-Mail-Inhalte
+        const contentAreas = [
+            ...messageDiv.querySelectorAll('.text-block-title'),
+            ...messageDiv.querySelectorAll('p'),
+            ...messageDiv.querySelectorAll('div')
+        ];
+
+        contentAreas.forEach(element => {
+            const text = element.textContent || '';
+
+            // Muster für zitierte E-Mails (häufigste deutsche und englische Varianten)
+            const quotePatterns = [
+                /^Am\s+\d{1,2}\.\d{1,2}\.\d{2,4}.*schrieb/i,
+                /^On\s+.*\d{4}.*wrote:/i,
+                /^Von:.*Gesendet:/i,
+                /^From:.*Sent:/i,
+                /^----.*Original.*Message.*----/i,
+                /^_{5,}/,  // Lange Unterstriche
+                /^={5,}/   // Lange Gleichheitszeichen
+            ];
+
+            const isQuoteStart = quotePatterns.some(pattern => pattern.test(text.trim()));
+
+            if (isQuoteStart) {
+                // Finde alle nachfolgenden Geschwister-Elemente (das Zitat)
+                let quotedContent = document.createElement('div');
+                let sibling = element;
+                let foundContent = false;
+
+                while (sibling) {
+                    quotedContent.appendChild(sibling.cloneNode(true));
+                    foundContent = true;
+                    const next = sibling.nextElementSibling;
+                    sibling.remove();
+                    sibling = next;
+                }
+
+                if (foundContent) {
+                    makeCollapsible(element, quotedContent, 'Zitierte E-Mail anzeigen');
+                    console.log('📧 Zitierte E-Mail gefunden und eingeklappt');
+                }
+            }
+
+            // Muster für Signaturen
+            const signaturePatterns = [
+                /^--\s*$/,
+                /^Mit freundlichen Grüßen/i,
+                /^Freundliche Grüße/i,
+                /^Viele Grüße/i,
+                /^Best regards/i,
+                /^Kind regards/i,
+                /^Regards/i,
+                /^Grüße/i
+            ];
+
+            const isSignatureStart = signaturePatterns.some(pattern => pattern.test(text.trim()));
+
+            if (isSignatureStart && !element.dataset._collapsible) {
+                // Sammle Signatur-Elemente (alle nachfolgenden Geschwister)
+                let signatureContent = document.createElement('div');
+                let sibling = element;
+                let foundContent = false;
+
+                while (sibling) {
+                    signatureContent.appendChild(sibling.cloneNode(true));
+                    foundContent = true;
+                    const next = sibling.nextElementSibling;
+                    sibling.remove();
+                    sibling = next;
+                }
+
+                if (foundContent) {
+                    makeCollapsible(element, signatureContent, 'Signatur anzeigen');
+                    console.log('✍️ Signatur gefunden und eingeklappt');
+                }
+            }
+        });
+
+        messageDiv.dataset._quotesProcessed = 'true';
+    });
+}
+
+// Observer für neue Nachrichten
+const collapseObserver = new MutationObserver(() => {
+    findAndCollapseQuotesAndSignatures();
+});
+
+collapseObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Initial ausführen
+findAndCollapseQuotesAndSignatures();
