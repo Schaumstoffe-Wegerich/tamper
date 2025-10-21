@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.07
+// @version      2.08
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -528,14 +528,32 @@ function ensureDashboardTabIsActive() {
     // Simuliere Klick auf den Dashboard Tab um sicherzustellen,
     // dass Chatwoot die Daten an das iframe sendet
     const tabs = document.querySelectorAll('[role="tab"]');
+    let foundTab = false;
+
     tabs.forEach(tab => {
         const text = tab.textContent || '';
         if (text.includes('Bestellungen') || text.includes('Dashboard')) {
-            // Klicke auf den Tab, auch wenn er hidden ist
+            // Mache den Tab kurz sichtbar für den Klick
+            const originalDisplay = tab.style.display;
+            tab.style.display = 'block';
+
+            // Klicke auf den Tab
             tab.click();
-            console.log('🔘 Dashboard Tab aktiviert');
+            foundTab = true;
+            console.log('🔘 Dashboard Tab aktiviert:', text.trim());
+
+            // Verstecke ihn nach dem Klick wieder
+            setTimeout(() => {
+                tab.style.display = originalDisplay || 'none';
+            }, 100);
         }
     });
+
+    if (!foundTab) {
+        console.log('⚠️ Dashboard Tab nicht gefunden');
+    }
+
+    return foundTab;
 }
 
 function moveDashboardAppToSidebar() {
@@ -630,9 +648,32 @@ new MutationObserver(() => {
     }
 }).observe(document, {subtree: true, childList: true});
 
-// Initial ausführen
-setTimeout(() => {
+// Initial ausführen - mehrfach versuchen bis Dashboard gefunden wird
+let initAttempts = 0;
+const maxInitAttempts = 10;
+
+function initializeDashboard() {
+    initAttempts++;
+
+    // Klicke auf Dashboard Tab
     ensureDashboardTabIsActive();
-    moveDashboardAppToSidebar();
-    currentConversationId = getCurrentConversationId();
-}, 1000);
+
+    // Warte kurz und versuche dann das Dashboard zu verschieben
+    setTimeout(() => {
+        const iframe = document.querySelector('iframe[src*="cwa.intern.frankenschaum.de"]');
+
+        if (iframe) {
+            moveDashboardAppToSidebar();
+            currentConversationId = getCurrentConversationId();
+            console.log('✅ Dashboard erfolgreich initialisiert');
+        } else if (initAttempts < maxInitAttempts) {
+            console.log(`🔄 Dashboard noch nicht geladen, Versuch ${initAttempts}/${maxInitAttempts}`);
+            setTimeout(initializeDashboard, 500);
+        } else {
+            console.log('⚠️ Dashboard konnte nicht gefunden werden');
+        }
+    }, 300);
+}
+
+// Starte Initialisierung nach 500ms
+setTimeout(initializeDashboard, 500);
