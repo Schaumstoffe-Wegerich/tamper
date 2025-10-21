@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.25
+// @version      2.26
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -762,6 +762,48 @@ new MutationObserver(() => {
         checkConversationChange();
     }
 }).observe(document, {subtree: true, childList: true});
+
+// Contact Sidebar Toggle - setze z-index wenn geklickt
+function setupContactSidebarToggle() {
+    // Finde den Toggle-Button (mit user icon)
+    const toggleButton = document.querySelector('button.\\!rounded-full .i-ph-user-bold');
+
+    if (toggleButton && toggleButton.parentElement) {
+        const button = toggleButton.parentElement;
+
+        // Entferne alte Listener falls vorhanden
+        button.removeEventListener('click', handleContactSidebarToggle);
+
+        // Füge neuen Listener hinzu
+        button.addEventListener('click', handleContactSidebarToggle);
+        console.log('👤 Contact Sidebar Toggle Button gefunden und Listener hinzugefügt');
+    }
+}
+
+function handleContactSidebarToggle() {
+    setTimeout(() => {
+        // Finde die Contact Sidebar
+        const contactSidebar = document.querySelector('.bg-n-background.h-full.overflow-hidden.flex.flex-col.fixed.top-0.z-40');
+
+        if (contactSidebar) {
+            contactSidebar.style.zIndex = '9999999';
+            console.log('📱 Contact Sidebar z-index auf 9999999 gesetzt');
+        }
+    }, 100);
+}
+
+// Observer für Contact Toggle Button
+const contactToggleObserver = new MutationObserver(() => {
+    setupContactSidebarToggle();
+});
+
+contactToggleObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+// Initial ausführen
+setupContactSidebarToggle();
 
 // Initial ausführen - mehrfach versuchen bis Dashboard gefunden wird
 let initAttempts = 0;
