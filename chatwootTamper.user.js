@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.00
+// @version      2.01
 // @description  Email Breite & Title & Zitate/Signaturen wegklappen
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -170,28 +170,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== NEUE FUNKTION: Zitate und Signaturen wegklappen =====
 
-function makeCollapsible(element, content, label) {
-    if (element.dataset._collapsible) return; // Bereits bearbeitet
+function createCollapsibleWrapper(elementsToWrap, label) {
+    if (!elementsToWrap || elementsToWrap.length === 0) return null;
 
     const wrapper = document.createElement('div');
     wrapper.className = 'email-collapse-wrapper';
 
     const button = document.createElement('button');
     button.className = 'email-collapse-button';
-    button.textContent = `▼ ${label}`;
-    button.dataset.collapsed = 'false';
+    button.textContent = `▶ ${label}`;
+    button.dataset.collapsed = 'true';
 
     const contentWrapper = document.createElement('div');
     contentWrapper.className = 'email-collapse-content collapsed';
-    contentWrapper.appendChild(content.cloneNode(true));
+
+    // Verschiebe alle Elemente in den contentWrapper
+    elementsToWrap.forEach(el => {
+        contentWrapper.appendChild(el.cloneNode(true));
+    });
 
     button.addEventListener('click', () => {
         const isCollapsed = button.dataset.collapsed === 'true';
         if (isCollapsed) {
             contentWrapper.classList.remove('collapsed');
+            contentWrapper.style.maxHeight = contentWrapper.scrollHeight + 'px';
             button.textContent = `▼ ${label}`;
             button.dataset.collapsed = 'false';
         } else {
+            contentWrapper.style.maxHeight = '0';
             contentWrapper.classList.add('collapsed');
             button.textContent = `▶ ${label}`;
             button.dataset.collapsed = 'true';
@@ -200,14 +206,9 @@ function makeCollapsible(element, content, label) {
 
     wrapper.appendChild(button);
     wrapper.appendChild(contentWrapper);
-
-    element.parentNode.insertBefore(wrapper, element);
-    element.remove();
-
-    // Standardmäßig eingeklappt
-    button.click();
-
     wrapper.dataset._collapsible = 'true';
+
+    return wrapper;
 }
 
 function findAndCollapseQuotesAndSignatures() {
@@ -224,7 +225,16 @@ function findAndCollapseQuotesAndSignatures() {
             ...messageDiv.querySelectorAll('div')
         ];
 
-        contentAreas.forEach(element => {
+        let i = 0;
+        while (i < contentAreas.length) {
+            const element = contentAreas[i];
+
+            // Skip wenn bereits bearbeitet
+            if (element.dataset._collapsible || element.closest('.email-collapse-wrapper')) {
+                i++;
+                continue;
+            }
+
             const text = element.textContent || '';
 
             // Muster für zitierte E-Mails (häufigste deutsche und englische Varianten)
@@ -240,24 +250,31 @@ function findAndCollapseQuotesAndSignatures() {
 
             const isQuoteStart = quotePatterns.some(pattern => pattern.test(text.trim()));
 
-            if (isQuoteStart) {
-                // Finde alle nachfolgenden Geschwister-Elemente (das Zitat)
-                let quotedContent = document.createElement('div');
-                let sibling = element;
-                let foundContent = false;
+            if (isQuoteStart && element.parentNode) {
+                // Sammle alle nachfolgenden Geschwister-Elemente
+                const elementsToWrap = [element];
+                let sibling = element.nextElementSibling;
 
                 while (sibling) {
-                    quotedContent.appendChild(sibling.cloneNode(true));
-                    foundContent = true;
-                    const next = sibling.nextElementSibling;
-                    sibling.remove();
-                    sibling = next;
+                    elementsToWrap.push(sibling);
+                    sibling = sibling.nextElementSibling;
                 }
 
-                if (foundContent) {
-                    makeCollapsible(element, quotedContent, 'Zitierte E-Mail anzeigen');
+                // Erstelle den Wrapper
+                const wrapper = createCollapsibleWrapper(elementsToWrap, 'Zitierte E-Mail anzeigen');
+
+                if (wrapper) {
+                    // Füge den Wrapper vor dem ersten Element ein
+                    element.parentNode.insertBefore(wrapper, element);
+
+                    // Entferne die originalen Elemente
+                    elementsToWrap.forEach(el => el.remove());
+
                     console.log('📧 Zitierte E-Mail gefunden und eingeklappt');
                 }
+
+                i += elementsToWrap.length;
+                continue;
             }
 
             // Muster für Signaturen
@@ -274,26 +291,35 @@ function findAndCollapseQuotesAndSignatures() {
 
             const isSignatureStart = signaturePatterns.some(pattern => pattern.test(text.trim()));
 
-            if (isSignatureStart && !element.dataset._collapsible) {
+            if (isSignatureStart && element.parentNode) {
                 // Sammle Signatur-Elemente (alle nachfolgenden Geschwister)
-                let signatureContent = document.createElement('div');
-                let sibling = element;
-                let foundContent = false;
+                const elementsToWrap = [element];
+                let sibling = element.nextElementSibling;
 
                 while (sibling) {
-                    signatureContent.appendChild(sibling.cloneNode(true));
-                    foundContent = true;
-                    const next = sibling.nextElementSibling;
-                    sibling.remove();
-                    sibling = next;
+                    elementsToWrap.push(sibling);
+                    sibling = sibling.nextElementSibling;
                 }
 
-                if (foundContent) {
-                    makeCollapsible(element, signatureContent, 'Signatur anzeigen');
+                // Erstelle den Wrapper
+                const wrapper = createCollapsibleWrapper(elementsToWrap, 'Signatur anzeigen');
+
+                if (wrapper) {
+                    // Füge den Wrapper vor dem ersten Element ein
+                    element.parentNode.insertBefore(wrapper, element);
+
+                    // Entferne die originalen Elemente
+                    elementsToWrap.forEach(el => el.remove());
+
                     console.log('✍️ Signatur gefunden und eingeklappt');
                 }
+
+                i += elementsToWrap.length;
+                continue;
             }
-        });
+
+            i++;
+        }
 
         messageDiv.dataset._quotesProcessed = 'true';
     });
