@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.05
+// @version      2.06
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -511,12 +511,15 @@ function reloadDashboardIframe() {
 
     console.log('🔄 Dashboard wird neu geladen für Conversation:', currentConversationId);
 
-    // Force reload des iframes
-    const currentSrc = dashboardIframeInSidebar.src;
-    dashboardIframeInSidebar.src = '';
-    setTimeout(() => {
-        dashboardIframeInSidebar.src = currentSrc;
-    }, 50);
+    // Triggere einen Tab-Wechsel um Chatwoot zu zwingen, Daten zu senden
+    ensureDashboardTabIsActive();
+
+    // Optional: Force reload des iframes (nur wenn nötig)
+    // const currentSrc = dashboardIframeInSidebar.src;
+    // dashboardIframeInSidebar.src = '';
+    // setTimeout(() => {
+    //     dashboardIframeInSidebar.src = currentSrc;
+    // }, 50);
 }
 
 function ensureDashboardTabIsActive() {
@@ -541,13 +544,14 @@ function moveDashboardAppToSidebar() {
         return;
     }
 
-    // Verstecke den Tab/Tab-Content
+    // Prüfe ob Sidebar bereits existiert und das iframe bereits darin ist
+    if (dashboardSidebar && dashboardSidebar.contains(dashboardIframe)) {
+        return;
+    }
+
+    // Verstecke den Tab/Tab-Content (aber nicht das iframe!)
     const tabContent = dashboardIframe.closest('[role="tabpanel"]') ||
                        dashboardIframe.closest('.dashboard-app-container');
-
-    if (tabContent) {
-        tabContent.style.display = 'none';
-    }
 
     // Suche und verstecke den Tab-Button (aber nach dem Klick!)
     const tabs = document.querySelectorAll('[role="tab"]');
@@ -558,33 +562,28 @@ function moveDashboardAppToSidebar() {
         }
     });
 
-    // Prüfe ob Sidebar bereits existiert
-    if (dashboardSidebar) {
-        // Update nur das iframe
-        const existingIframe = dashboardSidebar.querySelector('iframe');
-        if (existingIframe && dashboardIframe.src !== existingIframe.src) {
-            existingIframe.src = dashboardIframe.src;
-        }
-        dashboardIframeInSidebar = existingIframe;
-        return;
+    // Erstelle die Sidebar falls noch nicht vorhanden
+    if (!dashboardSidebar) {
+        dashboardSidebar = document.createElement('div');
+        dashboardSidebar.className = 'dashboard-app-sidebar';
+        document.body.appendChild(dashboardSidebar);
+        document.body.classList.add('has-dashboard-sidebar');
     }
 
-    // Erstelle die Sidebar
-    dashboardSidebar = document.createElement('div');
-    dashboardSidebar.className = 'dashboard-app-sidebar';
+    // WICHTIG: Verschiebe das ORIGINALE iframe (nicht klonen!)
+    // Das ist wichtig, damit Chatwoot-Events beim iframe ankommen
+    dashboardSidebar.appendChild(dashboardIframe);
+    dashboardIframeInSidebar = dashboardIframe;
 
-    // Clone das iframe
-    const clonedIframe = dashboardIframe.cloneNode(true);
     // Entferne lazy loading
-    clonedIframe.loading = 'eager';
-    dashboardSidebar.appendChild(clonedIframe);
-    dashboardIframeInSidebar = clonedIframe;
+    dashboardIframe.loading = 'eager';
 
-    // Füge die Sidebar zum Body hinzu
-    document.body.appendChild(dashboardSidebar);
-    document.body.classList.add('has-dashboard-sidebar');
+    // Jetzt können wir den Tab-Content verstecken (iframe ist ja schon raus)
+    if (tabContent) {
+        tabContent.style.display = 'none';
+    }
 
-    console.log('📊 Dashboard App als Sidebar verschoben');
+    console.log('📊 Dashboard App als Sidebar verschoben (Original iframe)');
 }
 
 function checkConversationChange() {
