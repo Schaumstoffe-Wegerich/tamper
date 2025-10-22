@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.31
+// @version      2.32
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -11,7 +11,6 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
-console.log('tamper aktiviert');
 
 GM_addStyle(`
 .conversation-panel > li .wrap, .wrap, .wrap .bubble {
@@ -167,9 +166,6 @@ function scrollToLastMessage() {
 
     if (targetElement) {
       targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      console.log(`Scrolled to message: ${targetElement.id}`);
-    } else {
-      console.log('No message element found to scroll to.');
     }
 }
 
@@ -182,7 +178,6 @@ function clickExpandButton() {
         if (!button.dataset._autoClicked) { // Verhindert mehrfaches Klicken
             button.click();
             button.dataset._autoClicked = "true";
-            console.log('🔘 "E-Mail erweitern"-Button automatisch geklickt');
             setTimeout(scrollToLastMessage, 300);
         }
     });
@@ -217,8 +212,6 @@ function removeDuplicateSignature() {
         for (let i = firstSep; i < secondSep; i++) {
             paragraphs[i].remove();
         }
-
-        console.log(`✂️ Erste Signatur entfernt (zwischen Absatz ${firstSep} und ${secondSep})`);
     }
 }
 
@@ -338,8 +331,6 @@ function findAndCollapseQuotesAndSignatures() {
 
                     // Entferne die originalen Elemente
                     elementsToWrap.forEach(el => el.remove());
-
-                    console.log('📧 Zitierte E-Mail gefunden und eingeklappt');
                 }
 
                 i += elementsToWrap.length;
@@ -379,8 +370,6 @@ function findAndCollapseQuotesAndSignatures() {
 
                     // Entferne die originalen Elemente
                     elementsToWrap.forEach(el => el.remove());
-
-                    console.log('✍️ Signatur gefunden und eingeklappt');
                 }
 
                 i += elementsToWrap.length;
@@ -465,7 +454,6 @@ function makeNoteCollapsible(noteElement) {
     }
 
     noteElement.dataset._noteCollapsed = 'true';
-    console.log('📝 Interne Notiz eingeklappt');
 }
 
 function findAndCollapseNotes() {
@@ -545,8 +533,6 @@ function getCurrentConversationId() {
 function reloadDashboardIframe() {
     if (!dashboardIframeInSidebar) return;
 
-    console.log('🔄 Dashboard wird neu geladen für Conversation:', currentConversationId);
-
     // Triggere einen Tab-Wechsel um Chatwoot zu zwingen, Daten zu senden
     ensureDashboardTabIsActive();
 
@@ -556,7 +542,6 @@ function reloadDashboardIframe() {
         // Füge einen Timestamp-Parameter hinzu um Cache zu umgehen
         const separator = currentSrc.includes('?') ? '&' : '?';
         dashboardIframeInSidebar.src = currentSrc.split('?')[0] + separator + '_reload=' + Date.now();
-        console.log('🔄 Dashboard iframe reloaded');
     }, 300);
 }
 
@@ -592,7 +577,6 @@ function ensureDashboardTabIsActive() {
                 // Klicke auf den Tab
                 tab.click();
                 foundTab = true;
-                console.log('🔘 Dashboard Tab aktiviert:', text.trim(), '(Selektor:', selector, ')');
 
                 // Verstecke ihn nach dem Klick wieder
                 setTimeout(() => {
@@ -605,10 +589,6 @@ function ensureDashboardTabIsActive() {
         });
 
         if (foundTab) break;  // Stoppe wenn gefunden
-    }
-
-    if (!foundTab) {
-        console.log('⚠️ Dashboard Tab nicht gefunden');
     }
 
     return foundTab;
@@ -660,7 +640,6 @@ function moveDashboardAppToSidebar() {
     oldIframes.forEach(oldIframe => {
         if (oldIframe !== dashboardIframe) {
             oldIframe.remove();
-            console.log('🗑️ Altes iframe aus Sidebar entfernt');
         }
     });
 
@@ -676,8 +655,6 @@ function moveDashboardAppToSidebar() {
     if (tabContent) {
         tabContent.style.display = 'none';
     }
-
-    console.log('📊 Dashboard App als Sidebar verschoben (Original iframe)');
 
     // Klicke auf den Nachrichten-Tab um den Content anzuzeigen
     setTimeout(() => {
@@ -705,7 +682,6 @@ function clickMessagesTab(retryCount = 0) {
             const text = tab.textContent || '';
             if (text.trim() === 'Nachrichten' || text.includes('Nachrichten')) {
                 tab.click();
-                console.log('✅ Nachrichten-Tab geklickt (Versuch ' + (retryCount + 1) + ')');
                 found = true;
                 break;
             }
@@ -717,8 +693,6 @@ function clickMessagesTab(retryCount = 0) {
         setTimeout(() => {
             clickMessagesTab(retryCount + 1);
         }, 200);
-    } else if (!found) {
-        console.log('⚠️ Nachrichten-Tab nicht gefunden nach 5 Versuchen');
     }
 }
 
@@ -726,7 +700,6 @@ function checkConversationChange() {
     const newConversationId = getCurrentConversationId();
 
     if (newConversationId && newConversationId !== currentConversationId) {
-        console.log('🔄 Conversation geändert:', currentConversationId, '->', newConversationId);
         currentConversationId = newConversationId;
 
         // Aktiviere den Dashboard Tab damit Chatwoot Daten sendet
@@ -772,7 +745,6 @@ new MutationObserver(() => {
     const url = location.href;
     if (url !== lastUrl) {
         lastUrl = url;
-        console.log('🔗 URL geändert:', url);
         checkConversationChange();
     }
 }).observe(document, {subtree: true, childList: true});
@@ -792,7 +764,6 @@ function setupContactSidebarToggle() {
 
         // Füge neuen Listener hinzu
         button.addEventListener('click', handleContactSidebarToggle);
-        console.log('👤 Contact Sidebar Toggle Button gefunden und Listener hinzugefügt');
     }
 }
 
@@ -813,8 +784,6 @@ function handleContactSidebarToggle() {
                 if (contactSidebar) {
                     contactSidebar.style.zIndex = '0';
                 }
-
-                console.log('📱 Dashboard Sidebar eingeblendet, Contact Sidebar z-index auf 0');
             } else {
                 // Dashboard Sidebar war sichtbar -> ausblenden
                 dashboardSidebarElement.style.display = 'none';
@@ -824,8 +793,6 @@ function handleContactSidebarToggle() {
                 if (contactSidebar) {
                     contactSidebar.style.zIndex = '9999999';
                 }
-
-                console.log('📱 Dashboard Sidebar ausgeblendet, Contact Sidebar z-index auf 9999999');
             }
         }
     }, 100);
@@ -861,12 +828,8 @@ function initializeDashboard() {
         if (iframe) {
             moveDashboardAppToSidebar();
             currentConversationId = getCurrentConversationId();
-            console.log('✅ Dashboard erfolgreich initialisiert');
         } else if (initAttempts < maxInitAttempts) {
-            console.log(`🔄 Dashboard noch nicht geladen, Versuch ${initAttempts}/${maxInitAttempts}`);
             setTimeout(initializeDashboard, 500);
-        } else {
-            console.log('⚠️ Dashboard konnte nicht gefunden werden');
         }
     }, 300);
 }
