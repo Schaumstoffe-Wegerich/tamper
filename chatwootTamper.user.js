@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.39
+// @version      2.40
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -115,12 +115,11 @@ body.has-dashboard-sidebar .wrap {
 /* Contact Sidebar Toggle Button positionieren */
 .flex.flex-col.justify-center.items-center.absolute.top-36.xl\\:top-24.ltr\\:right-2.rtl\\:left-2.bg-n-solid-2.border.border-n-weak.rounded-full.gap-2.p-1 {
   z-index: 999999 !important;
-  right: 3.6rem !important;
-  top: 3.6rem !important;
+  right: 3rem !important;
+  top: 3rem !important;
   border: 2px solid rgba(59, 130, 246, 0.5) !important;
   box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
   animation: pulse-border 2s infinite;
-  transform: scale(1.5) !important;
 }
 
 @keyframes pulse-border {
@@ -772,27 +771,28 @@ new MutationObserver(() => {
 let isDashboardSidebarHidden = false;
 
 function setupContactSidebarToggle() {
-    // Finde den Toggle-Button (mit user icon oder bereits existierendem Avatar)
+    // Finde den Toggle-Button
     const toggleButton = document.querySelector('button.\\!rounded-full .i-ph-user-bold');
     const existingButton = document.querySelector('button.\\!rounded-full');
 
     if (toggleButton && toggleButton.parentElement) {
         const button = toggleButton.parentElement;
 
-        // Verwende die Konversations-ID als Seed für unterschiedliche Avatare
-        const conversationId = getCurrentConversationId() || 'default';
-        const avatar = document.createElement('img');
-        avatar.src = `https://api.dicebear.com/9.x/adventurer/svg?seed=${conversationId}`;
-        avatar.style.width = '100%';
-        avatar.style.height = '100%';
-        avatar.style.borderRadius = '50%';
+        // Ersetze das User-Icon durch ein Toggle-Icon (Panels/Sidebar Icon)
+        if (!button.querySelector('.toggle-icon-replaced')) {
+            const toggleIcon = document.createElement('span');
+            toggleIcon.className = 'toggle-icon-replaced';
+            toggleIcon.innerHTML = '⇄'; // Toggle Symbol
+            toggleIcon.style.fontSize = '20px';
+            toggleIcon.style.fontWeight = 'bold';
 
-        // Füge Tooltip hinzu
-        button.title = 'Kontakt-Infos ein-/ausblenden';
+            // Füge Tooltip hinzu
+            button.title = 'Kontakt-Infos ein-/ausblenden';
 
-        // Entferne das Icon und füge den Avatar ein
-        toggleButton.remove();
-        button.appendChild(avatar);
+            // Entferne das alte Icon und füge das neue ein
+            toggleButton.remove();
+            button.appendChild(toggleIcon);
+        }
 
         // Entferne alte Listener falls vorhanden
         button.removeEventListener('click', handleContactSidebarToggle);
@@ -800,18 +800,6 @@ function setupContactSidebarToggle() {
         // Füge neuen Listener hinzu
         button.addEventListener('click', handleContactSidebarToggle);
     } else if (existingButton) {
-        // Button existiert bereits mit Avatar - aktualisiere nur die src
-        const existingAvatar = existingButton.querySelector('img[src*="dicebear"]');
-        if (existingAvatar) {
-            const conversationId = getCurrentConversationId() || 'default';
-            const newSrc = `https://api.dicebear.com/9.x/adventurer/svg?seed=${conversationId}`;
-
-            // Nur aktualisieren wenn sich die Konversation geändert hat
-            if (!existingAvatar.src.includes(`seed=${conversationId}`)) {
-                existingAvatar.src = newSrc;
-            }
-        }
-
         // Stelle sicher dass der Tooltip gesetzt ist
         if (!existingButton.title) {
             existingButton.title = 'Kontakt-Infos ein-/ausblenden';
