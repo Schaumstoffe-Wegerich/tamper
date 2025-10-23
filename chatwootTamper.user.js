@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.33
+// @version      2.34
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -773,6 +773,19 @@ function setupContactSidebarToggle() {
 
     if (toggleButton && toggleButton.parentElement) {
         const button = toggleButton.parentElement;
+
+        // Ersetze das Icon durch einen Avatar, falls noch nicht geschehen
+        if (!button.querySelector('img[src*="dicebear"]')) {
+            const avatar = document.createElement('img');
+            avatar.src = 'https://api.dicebear.com/9.x/adventurer/svg';
+            avatar.style.width = '100%';
+            avatar.style.height = '100%';
+            avatar.style.borderRadius = '50%';
+
+            // Entferne das Icon und füge den Avatar ein
+            toggleButton.remove();
+            button.appendChild(avatar);
+        }
 
         // Entferne alte Listener falls vorhanden
         button.removeEventListener('click', handleContactSidebarToggle);
