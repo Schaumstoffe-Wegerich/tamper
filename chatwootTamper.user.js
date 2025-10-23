@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.36
+// @version      2.37
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -115,8 +115,8 @@ body.has-dashboard-sidebar .wrap {
 /* Contact Sidebar Toggle Button positionieren */
 .flex.flex-col.justify-center.items-center.absolute.top-36.xl\\:top-24.ltr\\:right-2.rtl\\:left-2.bg-n-solid-2.border.border-n-weak.rounded-full.gap-2.p-1 {
   z-index: 999999 !important;
-  right: 3rem !important;
-  top: 3rem !important;
+  right: 3.6rem !important;
+  top: 3.6rem !important;
   border: 2px solid rgba(59, 130, 246, 0.5) !important;
   box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
   animation: pulse-border 2s infinite;
