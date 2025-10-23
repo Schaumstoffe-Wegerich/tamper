@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.38
+// @version      2.39
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -787,6 +787,9 @@ function setupContactSidebarToggle() {
         avatar.style.height = '100%';
         avatar.style.borderRadius = '50%';
 
+        // Füge Tooltip hinzu
+        button.title = 'Kontakt-Infos ein-/ausblenden';
+
         // Entferne das Icon und füge den Avatar ein
         toggleButton.remove();
         button.appendChild(avatar);
@@ -807,6 +810,11 @@ function setupContactSidebarToggle() {
             if (!existingAvatar.src.includes(`seed=${conversationId}`)) {
                 existingAvatar.src = newSrc;
             }
+        }
+
+        // Stelle sicher dass der Tooltip gesetzt ist
+        if (!existingButton.title) {
+            existingButton.title = 'Kontakt-Infos ein-/ausblenden';
         }
     }
 }
