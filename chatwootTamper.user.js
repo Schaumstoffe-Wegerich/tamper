@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.34
+// @version      2.35
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -777,7 +777,10 @@ function setupContactSidebarToggle() {
         // Ersetze das Icon durch einen Avatar, falls noch nicht geschehen
         if (!button.querySelector('img[src*="dicebear"]')) {
             const avatar = document.createElement('img');
-            avatar.src = 'https://api.dicebear.com/9.x/adventurer/svg';
+
+            // Verwende die Konversations-ID als Seed für unterschiedliche Avatare
+            const conversationId = getCurrentConversationId() || 'default';
+            avatar.src = `https://api.dicebear.com/9.x/adventurer/svg?seed=${conversationId}`;
             avatar.style.width = '100%';
             avatar.style.height = '100%';
             avatar.style.borderRadius = '50%';
