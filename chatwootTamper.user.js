@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.40
+// @version      2.41
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -142,6 +142,20 @@ button:has-text("Bestellungen") {
 }
 `);
 document.title = "FrankenSchaum Support";
+
+// ===== UTILITY: Debounce Function =====
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
         // Finde alle Elemente mit role="listitem"
         const listItems = document.querySelectorAll('[role="listitem"]');
@@ -198,10 +212,10 @@ function clickExpandButton() {
     });
 }
 
-// MutationObserver, um auf neue Buttons zu reagieren
-const buttonObserver = new MutationObserver(() => {
+// MutationObserver, um auf neue Buttons zu reagieren (mit Debouncing)
+const buttonObserver = new MutationObserver(debounce(() => {
     clickExpandButton();
-});
+}, 300));
 
 buttonObserver.observe(document.body, {
     childList: true,
@@ -230,10 +244,10 @@ function removeDuplicateSignature() {
     }
 }
 
-// Trigger bei DOM-Änderungen
-const sigObserver = new MutationObserver(() => {
+// Trigger bei DOM-Änderungen (mit Debouncing)
+const sigObserver = new MutationObserver(debounce(() => {
     removeDuplicateSignature();
-});
+}, 500));
 
 sigObserver.observe(document.body, {
     childList: true,
@@ -293,7 +307,8 @@ function findAndCollapseQuotesAndSignatures() {
     const messages = document.querySelectorAll('div[id^="message"]');
 
     messages.forEach(messageDiv => {
-        if (messageDiv.dataset._quotesProcessed) return;
+        // Skip bereits verarbeitete Nachrichten
+        if (messageDiv.dataset._quotesProcessed === 'true') return;
 
         // Suche nach verschiedenen Strukturen für E-Mail-Inhalte
         const contentAreas = [
@@ -398,18 +413,20 @@ function findAndCollapseQuotesAndSignatures() {
     });
 }
 
-// Observer für neue Nachrichten
-const collapseObserver = new MutationObserver(() => {
+// Observer für neue Nachrichten (mit starkem Debouncing)
+const collapseObserver = new MutationObserver(debounce(() => {
     findAndCollapseQuotesAndSignatures();
-});
+}, 800));
 
 collapseObserver.observe(document.body, {
     childList: true,
     subtree: true
 });
 
-// Initial ausführen
-findAndCollapseQuotesAndSignatures();
+// Initial ausführen (verzögert)
+setTimeout(() => {
+    findAndCollapseQuotesAndSignatures();
+}, 1000);
 
 // ===== NEUE FUNKTION: Interne Notizen wegklappen =====
 
@@ -510,18 +527,20 @@ function findAndCollapseNotes() {
     });
 }
 
-// Observer für neue Notizen
-const notesObserver = new MutationObserver(() => {
+// Observer für neue Notizen (mit Debouncing)
+const notesObserver = new MutationObserver(debounce(() => {
     findAndCollapseNotes();
-});
+}, 800));
 
 notesObserver.observe(document.body, {
     childList: true,
     subtree: true
 });
 
-// Initial ausführen
-findAndCollapseNotes();
+// Initial ausführen (verzögert)
+setTimeout(() => {
+    findAndCollapseNotes();
+}, 1200);
 
 // ===== NEUE FUNKTION: Dashboard App als Sidebar =====
 
@@ -746,26 +765,28 @@ function checkConversationChange() {
     }
 }
 
-// Observer für Dashboard App UND Conversation Changes
-const dashboardObserver = new MutationObserver(() => {
+// Observer für Dashboard App UND Conversation Changes (mit Debouncing)
+const dashboardObserver = new MutationObserver(debounce(() => {
     moveDashboardAppToSidebar();
     checkConversationChange();
-});
+}, 500));
 
 dashboardObserver.observe(document.body, {
     childList: true,
     subtree: true
 });
 
-// Überwache auch URL-Änderungen
+// Überwache auch URL-Änderungen (mit Debouncing)
 let lastUrl = location.href;
-new MutationObserver(() => {
+const urlObserver = new MutationObserver(debounce(() => {
     const url = location.href;
     if (url !== lastUrl) {
         lastUrl = url;
         checkConversationChange();
     }
-}).observe(document, {subtree: true, childList: true});
+}, 300));
+
+urlObserver.observe(document, {subtree: true, childList: true});
 
 // Contact Sidebar Toggle - setze z-index wenn geklickt
 let isDashboardSidebarHidden = false;
@@ -838,18 +859,20 @@ function handleContactSidebarToggle() {
     }, 100);
 }
 
-// Observer für Contact Toggle Button
-const contactToggleObserver = new MutationObserver(() => {
+// Observer für Contact Toggle Button (mit Debouncing)
+const contactToggleObserver = new MutationObserver(debounce(() => {
     setupContactSidebarToggle();
-});
+}, 500));
 
 contactToggleObserver.observe(document.body, {
     childList: true,
     subtree: true
 });
 
-// Initial ausführen
-setupContactSidebarToggle();
+// Initial ausführen (verzögert)
+setTimeout(() => {
+    setupContactSidebarToggle();
+}, 800);
 
 // Initial ausführen - mehrfach versuchen bis Dashboard gefunden wird
 let initAttempts = 0;
