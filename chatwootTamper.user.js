@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.37
+// @version      2.38
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -718,6 +718,9 @@ function checkConversationChange() {
     if (newConversationId && newConversationId !== currentConversationId) {
         currentConversationId = newConversationId;
 
+        // Aktualisiere den Avatar für die neue Konversation
+        setupContactSidebarToggle();
+
         // Aktiviere den Dashboard Tab damit Chatwoot Daten sendet
         setTimeout(() => {
             ensureDashboardTabIsActive();
@@ -769,33 +772,42 @@ new MutationObserver(() => {
 let isDashboardSidebarHidden = false;
 
 function setupContactSidebarToggle() {
-    // Finde den Toggle-Button (mit user icon)
+    // Finde den Toggle-Button (mit user icon oder bereits existierendem Avatar)
     const toggleButton = document.querySelector('button.\\!rounded-full .i-ph-user-bold');
+    const existingButton = document.querySelector('button.\\!rounded-full');
 
     if (toggleButton && toggleButton.parentElement) {
         const button = toggleButton.parentElement;
 
-        // Ersetze das Icon durch einen Avatar, falls noch nicht geschehen
-        if (!button.querySelector('img[src*="dicebear"]')) {
-            const avatar = document.createElement('img');
+        // Verwende die Konversations-ID als Seed für unterschiedliche Avatare
+        const conversationId = getCurrentConversationId() || 'default';
+        const avatar = document.createElement('img');
+        avatar.src = `https://api.dicebear.com/9.x/adventurer/svg?seed=${conversationId}`;
+        avatar.style.width = '100%';
+        avatar.style.height = '100%';
+        avatar.style.borderRadius = '50%';
 
-            // Verwende die Konversations-ID als Seed für unterschiedliche Avatare
-            const conversationId = getCurrentConversationId() || 'default';
-            avatar.src = `https://api.dicebear.com/9.x/adventurer/svg?seed=${conversationId}`;
-            avatar.style.width = '100%';
-            avatar.style.height = '100%';
-            avatar.style.borderRadius = '50%';
-
-            // Entferne das Icon und füge den Avatar ein
-            toggleButton.remove();
-            button.appendChild(avatar);
-        }
+        // Entferne das Icon und füge den Avatar ein
+        toggleButton.remove();
+        button.appendChild(avatar);
 
         // Entferne alte Listener falls vorhanden
         button.removeEventListener('click', handleContactSidebarToggle);
 
         // Füge neuen Listener hinzu
         button.addEventListener('click', handleContactSidebarToggle);
+    } else if (existingButton) {
+        // Button existiert bereits mit Avatar - aktualisiere nur die src
+        const existingAvatar = existingButton.querySelector('img[src*="dicebear"]');
+        if (existingAvatar) {
+            const conversationId = getCurrentConversationId() || 'default';
+            const newSrc = `https://api.dicebear.com/9.x/adventurer/svg?seed=${conversationId}`;
+
+            // Nur aktualisieren wenn sich die Konversation geändert hat
+            if (!existingAvatar.src.includes(`seed=${conversationId}`)) {
+                existingAvatar.src = newSrc;
+            }
+        }
     }
 }
 
