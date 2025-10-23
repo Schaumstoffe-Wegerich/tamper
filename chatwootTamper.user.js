@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.32
+// @version      2.33
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -117,6 +117,21 @@ body.has-dashboard-sidebar .wrap {
   z-index: 999999 !important;
   right: 3rem !important;
   top: 3rem !important;
+  border: 2px solid rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
 }
 
 /* Tab ausblenden */
