@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chatwoot TamperScript
 // @namespace    http://tampermonkey.net/
-// @version      2.43
+// @version      2.44
 // @description  Email Breite & Title & Zitate/Signaturen/Notizen wegklappen & Dashboard als Sidebar
 // @author       Andreas Hemmerich
 // @match        https://hallo.frankenschaum.de/*
@@ -139,6 +139,11 @@ body.has-dashboard-sidebar .wrap {
 [role="tab"]:has-text("Bestellungen"),
 button:has-text("Bestellungen") {
   display: none !important;
+}
+
+/* Pre/Code Blöcke in Prose größer */
+.prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  font-size: 2.5em !important;
 }
 `);
 document.title = "FrankenSchaum Support";
