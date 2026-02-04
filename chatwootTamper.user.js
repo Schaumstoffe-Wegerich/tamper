@@ -88,8 +88,8 @@ body.has-dashboard-sidebar [role="main"],
 body.has-dashboard-sidebar main,
 body.has-dashboard-sidebar .view-box,
 body.has-dashboard-sidebar .conversations-view {
-  width: calc(100% - 400px) !important;
-  max-width: calc(100% - 400px) !important;
+  width: calc(100% - 800px) !important;
+  max-width: calc(100% - 800px) !important;
 }
 
 /* Message Container behält volle Breite innerhalb seines Parents */
